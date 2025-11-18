@@ -1,0 +1,108 @@
+// =============================
+//   Prisma Client Generator
+// =============================
+generator client {
+  provider = "prisma-client-js"
+}
+
+// =============================
+//   Database Connection
+// =============================
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================
+//          MODELS
+// =============================
+
+model User {
+  id         String    @id @default(uuid())
+  name       String
+  email      String    @unique
+  password   String
+  phone      String?
+  address    String?
+  company    String?
+  isVerified Boolean   @default(false)
+  role       String    @default("user")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  contacts   Contact[]
+  leads      Lead[]
+  tasks      Task[]
+  // relations:
+  refreshTokens         RefreshToken[]
+  verificationTokens    VerificationToken[]
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+}
+
+model VerificationToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  used      Boolean  @default(false)
+}
+
+model Contact {
+  id        String    @id @default(uuid())
+  name      String
+  email     String?
+  phone     String?
+  company   String?
+  address   String?        // <-- add this
+  createdAt DateTime @default(now())
+
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id])
+
+  activities Activity[]
+}
+
+model Lead {
+  id         String   @id @default(uuid())
+  title      String
+  status     String   @default("NEW")
+  value      Int?
+  source     String?
+  createdAt  DateTime @default(now())
+
+  ownerId    String
+  owner      User     @relation(fields: [ownerId], references: [id])
+}
+
+model Task {
+  id        String   @id @default(uuid())
+  title     String
+  dueDate   DateTime?
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User @relation(fields: [userId], references: [id])
+}
+
+model Activity {
+  id        String   @id @default(uuid())
+  type      String
+  note      String?
+  createdAt DateTime @default(now())
+
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id])
+}
+
